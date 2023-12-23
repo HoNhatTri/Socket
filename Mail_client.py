@@ -1,4 +1,5 @@
 import os
+import json
 import socket
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -57,8 +58,8 @@ def create_email(sender_email, recipient_email, cc_email,cc_email_list, bcc_emai
 
 
 
-def send_email():
-    sender_email = 'vuco@gmail.com'
+def send_email(sender_email, smtp_server, smtp_port):
+    
     recipient_email = input("TO: ")
     cc_email = input("CC: ")
     cc_email_list = cc_email.split(',')
@@ -67,8 +68,8 @@ def send_email():
     bcc_email = input("BCC: ")
     bcc_email_list = bcc_email.split(',')
     bcc_email_list = [email.strip() for email in bcc_email_list]
-    smtp_server = 'localhost'  
-    smtp_port = 2225 
+      
+    
 
     # Tạo kết nối với máy chủ SMTP
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -139,66 +140,39 @@ def send_email():
 
     print("Connection to SMTP server closed")
 
+def read_config_json(filename):
+    with open(filename, "r") as f:
+        config = json.load(f)
+    return config
 
 
 
-def receive_email():
-    host = '127.0.0.1'
-    port = 3335
-    
-    username = 'vuco@gmail.com'
-    password = '123'
-    
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((host, port))
 
-    # Xác thực người dùng
-    sock.sendall(b"USER " + username.encode("utf-8"))
-    resp = sock.recv(1024).decode("utf-8")
-    if resp == "-ERR":
-        return None
-    sock.sendall(b"PASS " + password.encode("utf-8"))
-    resp = sock.recv(1024).decode("utf-8")
-    if resp == "-ERR":
-        return None
 
-    # Lấy danh sách mail
-    sock.sendall(b"LIST").encode("utf-8")
-    resp = sock.recv(1024).decode("utf-8")
-    if resp == "-ERR":
-        return None
 
-    # Lấy nội dung từng mail
-    for line in resp.splitlines():
-        # Loại bỏ các dòng trống và dòng bắt đầu bằng dấu #
-        if len(line) > 0 and line[0] != "#":
-            index, size = line.split()
-            sock.sendall(b"RETR " + index.encode("utf-8"))
-            resp = sock.recv(size).decode("utf-8")
-            # Trả về nội dung mail
-            yield resp
-
-    # Xóa mail khỏi server (tùy chọn)
-    sock.sendall(b"QUIT").encode("utf-8")
-    resp = sock.recv(1024).decode("utf-8")
-    if resp == "-ERR":
-        return None
 
 
     
 
 def main():
-    print("Chọn chức năng:")
-    print("1. Gửi email")
-    print("2. Nhận email")
-    choice = input("Nhập lựa chọn của bạn (1 hoặc 2): ")
+    config = read_config_json('/home/vudeptrai/Documents/vu/config/config.json')
+    sender_email = (config["General"]["Username"])
+    smtp_server = (config["General"]["MailServer"])
+    smtp_port = (config["General"]["SMTP"])
+    pop3_port = (config["General"]["POP3"])
+    
+    
+    # print("Chọn chức năng:")
+    # print("1. Gửi email")
+    # print("2. Nhận email")
+    # choice = input("Nhập lựa chọn của bạn (1 hoặc 2): ")
 
-    if choice == "1":
-        send_email()
-    elif choice == "2":
-        receive_email()
-    else:
-        print("Lựa chọn không hợp lệ. Vui lòng chọn lại.")
+    # if choice == "1":
+    send_email(sender_email, smtp_server, smtp_port)
+    # elif choice == "2":
+    #     receive_email()
+    # else:
+    #     print("Lựa chọn không hợp lệ. Vui lòng chọn lại.")
 
 if __name__ == "__main__":
     main()
