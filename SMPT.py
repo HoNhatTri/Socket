@@ -137,4 +137,4 @@ def send_email():
     client.close()
 
     print("Connection to SMTP server closed")
-send_email()
+send_email()        

@@ -139,45 +139,50 @@ def send_email():
 
     print("Connection to SMTP server closed")
 
-def receive_all(sock):
-    # Nhận dữ liệu từ socket cho đến khi không còn dữ liệu nào nữa để nhận
-    data = b''
-    while True:
-        part = sock.recv(4096)
-        data += part
-        if len(part) < 4096:
-            break
-    return data
-
 
 
 
 def receive_email():
-    pop3_server = '127.0.0.1'
-    pop3_port = 3335
+    host = '127.0.0.1'
+    port = 3335
     
-    pop_conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    pop_conn.connect((pop3_server, pop3_port))
+    username = 'vuco@gmail.com'
+    password = '123'
+    
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((host, port))
 
-    print(pop_conn.recv(1024).decode('utf-8'))
+    # Xác thực người dùng
+    sock.sendall(b"USER " + username.encode("utf-8"))
+    resp = sock.recv(1024).decode("utf-8")
+    if resp == "-ERR":
+        return None
+    sock.sendall(b"PASS " + password.encode("utf-8"))
+    resp = sock.recv(1024).decode("utf-8")
+    if resp == "-ERR":
+        return None
 
-    # Gửi lệnh USER và PASSWORD để xác thực
-    pop_conn.send(b'USER your_username\r\n')
-    print(pop_conn.recv(1024).decode('utf-8'))
+    # Lấy danh sách mail
+    sock.sendall(b"LIST").encode("utf-8")
+    resp = sock.recv(1024).decode("utf-8")
+    if resp == "-ERR":
+        return None
 
-    pop_conn.send(b'PASS your_password\r\n')
-    print(pop_conn.recv(1024).decode('utf-8'))
+    # Lấy nội dung từng mail
+    for line in resp.splitlines():
+        # Loại bỏ các dòng trống và dòng bắt đầu bằng dấu #
+        if len(line) > 0 and line[0] != "#":
+            index, size = line.split()
+            sock.sendall(b"RETR " + index.encode("utf-8"))
+            resp = sock.recv(size).decode("utf-8")
+            # Trả về nội dung mail
+            yield resp
 
-    # Gửi lệnh LIST để lấy danh sách email
-    pop_conn.send(b'LIST\r\n')
-    print(pop_conn.recv(1024).decode('utf-8'))
-
-    # Gửi lệnh QUIT để đóng kết nối
-    pop_conn.send(b'QUIT\r\n')
-    print(pop_conn.recv(1024).decode('utf-8'))
-
-    pop_conn.close()
-
+    # Xóa mail khỏi server (tùy chọn)
+    sock.sendall(b"QUIT").encode("utf-8")
+    resp = sock.recv(1024).decode("utf-8")
+    if resp == "-ERR":
+        return None
 
 
     

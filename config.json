@@ -1,0 +1,11 @@
+{
+    "General": {
+      "Username": "vuco@gmail.com",
+      "Password": "ahihi",
+      "MailServer": "127.0.0.1",
+      "SMTP": 3333,
+      "POP3": 4444,
+      "Autoload": 10
+    }
+  }
+  
