@@ -106,10 +106,9 @@ def send_email(sender_email, smtp_server, smtp_port):
     subject = input("Subject: ")
     body = input("Content: ")
     attach_file = input("Có gửi kèm file (1. có, 2. không): ")
-    num_files = int(input("Số lượng file muốn gửi: "))
-    attachments = []
-
     if attach_file == '1':
+        num_files = int(input("Số lượng file muốn gửi: "))
+        attachments = []
         for i in range(num_files):
             file_path = input(f"Cho biết đường dẫn file thứ {i + 1}: ")
             attachments.append(file_path)
@@ -162,17 +161,17 @@ def main():
     pop3_port = (config["General"]["POP3"])
     
     
-    # print("Chọn chức năng:")
-    # print("1. Gửi email")
-    # print("2. Nhận email")
-    # choice = input("Nhập lựa chọn của bạn (1 hoặc 2): ")
+    print("Chọn chức năng:")
+    print("1. Gửi email")
+    print("2. Nhận email")
+    choice = input("Nhập lựa chọn của bạn (1 hoặc 2): ")
 
-    # if choice == "1":
-    send_email(sender_email, smtp_server, smtp_port)
-    # elif choice == "2":
-    #     receive_email()
-    # else:
-    #     print("Lựa chọn không hợp lệ. Vui lòng chọn lại.")
+    if choice == "1":
+        send_email(sender_email, smtp_server, smtp_port)
+    elif choice == "2":
+        receive_email()
+    else:
+        print("Lựa chọn không hợp lệ. Vui lòng chọn lại.")
 
 if __name__ == "__main__":
     main()
