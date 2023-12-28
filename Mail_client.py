@@ -1,4 +1,6 @@
 import os
+import threading
+import time
 import json
 import socket
 from email.mime.multipart import MIMEMultipart
@@ -159,19 +161,23 @@ def main():
     smtp_server = (config["General"]["MailServer"])
     smtp_port = (config["General"]["SMTP"])
     pop3_port = (config["General"]["POP3"])
+    autoload = (config["General"]["Autoload"]
     
-    
-    print("Chọn chức năng:")
-    print("1. Gửi email")
-    print("2. Nhận email")
-    choice = input("Nhập lựa chọn của bạn (1 hoặc 2): ")
 
-    if choice == "1":
-        send_email(sender_email, smtp_server, smtp_port)
-    elif choice == "2":
-        receive_email()
-    else:
-        print("Lựa chọn không hợp lệ. Vui lòng chọn lại.")
+    while True:
+        print("Chọn chức năng:")
+        print("1. Gửi email")
+        print("2. Xem danh sách các mail đã nhận")
+        print("3. Thoát")
 
-if __name__ == "__main__":
-    main()
+        choice = input("Nhập lựa chọn của bạn : ")
+        if choice == "1":
+            send_email(sender_email, smtp_server, smtp_port)
+        elif choice == "2":
+            receive_email()
+        elif choice == "3":
+            SystemExit
+        else:
+            print("Lựa chọn không hợp lệ. Vui lòng chọn lại.")
+
+main()
