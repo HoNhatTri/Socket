@@ -3,6 +3,8 @@ import threading
 import time
 import json
 import socket
+import base64
+
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
@@ -141,6 +143,78 @@ def send_email(sender_email, smtp_server, smtp_port):
 
     print("Connection to SMTP server closed")
 
+def fetch_emails():
+    email_server = '127.0.0.1'
+    email_port = 3335  # Sử dụng cổng 110 cho giao thức POP3 không qua SSL/TLS
+
+    # Kết nối đến server email
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((email_server, email_port))
+    response = sock.recv(1024).decode()
+    #print(response)
+
+    # Xác thực với server email
+    username = 'vuco@gmail.com'
+    password = '123'
+
+    sock.sendall(f'USER {username}\r\n'.encode())
+    response = sock.recv(1024).decode()
+    # print(response)
+
+    sock.sendall(f'PASS {password}\r\n'.encode())
+    response = sock.recv(1024).decode()
+    # print(response)
+    
+    # Lấy số lượng email trong hộp thư đến
+    num_emails = 0
+    
+    sock.sendall('STAT\r\n'.encode())
+    response = sock.recv(1024).decode()
+    # print(response)
+    num_emails = int(response.split()[1])
+
+    # Lấy danh sách các email trong hộp thư đến
+    sock.sendall('LIST\r\n'.encode())
+    response = sock.recv(1024).decode()
+    # print(response)
+
+    
+   # Sau khi lấy danh sách các email trong hộp thư đến
+    email_ids = response.split()[1:]
+    filtered_ids = [email_ids[i] for i in range((len(email_ids))) if i % 2 == 0]
+    
+    save_directory = '/home/vudeptrai/Documents/vu/Mail_from_Mail_Box'  # Thay đổi đường dẫn này thành đường dẫn thư mục bạn muốn lưu email
+    if not os.path.exists(save_directory):
+        os.makedirs(save_directory)
+
+        # Lặp qua từng ID và lấy nội dung email
+    i = 0
+    for email_id in filtered_ids:# Giả sử filtered_ids chứa các số thứ tự của email như bạn đã lấy được từ danh sách email_ids
+        if i < num_emails:
+            i += 1
+        else:
+            break
+        sock.sendall(f'RETR {email_id}\r\n'.encode())
+        email_content = b''
+        while True:
+            response = sock.recv(1024)
+            email_content += response
+            if response.endswith(b'\r\n.\r\n'):
+                break
+        # Lưu trữ email vào thư mục đã chỉ định
+        file_path = os.path.join(save_directory, f'email_{email_id}.msg')
+        with open(file_path, 'wb') as f:
+            f.write(email_content)
+        print(f'Saved email {email_id} to {file_path}')
+        
+    # Đóng kết nối
+    sock.sendall('QUIT\r\n'.encode())
+    response = sock.recv(1024).decode()
+    # print(response)
+
+
+
+
 def read_config_json(filename):
     with open(filename, "r") as f:
         config = json.load(f)
@@ -161,7 +235,7 @@ def main():
     smtp_server = (config["General"]["MailServer"])
     smtp_port = (config["General"]["SMTP"])
     pop3_port = (config["General"]["POP3"])
-    autoload = (config["General"]["Autoload"]
+    autoload = (config["General"]["Autoload"])
     
 
     while True:
@@ -174,9 +248,10 @@ def main():
         if choice == "1":
             send_email(sender_email, smtp_server, smtp_port)
         elif choice == "2":
-            receive_email()
+            fetch_emails()
         elif choice == "3":
-            SystemExit
+            print("Đã thoát chương trình.")
+            break
         else:
             print("Lựa chọn không hợp lệ. Vui lòng chọn lại.")
 
