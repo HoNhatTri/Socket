@@ -6,7 +6,7 @@ From: vuco@gmail.com
 To: vuco@gmail.com
 Cc: 
 Bcc: 
-Subject: virus
+Subject: virut
 
 --===============6511268601417252790==
 Content-Type: text/plain; charset="us-ascii"

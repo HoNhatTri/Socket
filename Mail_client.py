@@ -4,6 +4,7 @@ import time
 import json
 import socket
 import base64
+import shutil
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -143,9 +144,8 @@ def send_email(sender_email, smtp_server, smtp_port):
 
     print("Connection to SMTP server closed")
 
-def fetch_emails():
-    email_server = '127.0.0.1'
-    email_port = 3335  # Sử dụng cổng 110 cho giao thức POP3 không qua SSL/TLS
+def fetch_emails(email_server,email_port, username, password):
+    # Sử dụng cổng 110 cho giao thức POP3 không qua SSL/TLS
 
     # Kết nối đến server email
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -154,9 +154,7 @@ def fetch_emails():
     #print(response)
 
     # Xác thực với server email
-    username = 'vuco@gmail.com'
-    password = '123'
-
+    
     sock.sendall(f'USER {username}\r\n'.encode())
     response = sock.recv(1024).decode()
     # print(response)
@@ -212,6 +210,49 @@ def fetch_emails():
     response = sock.recv(1024).decode()
     # print(response)
 
+filter_rules = {
+    'Inbox': ['Others'],  # Thư mục mặc định cho các email không phù hợp với bất kỳ quy tắc nào
+    'Project': ['ahihi@testing.com', 'ahuu@testing.com'],
+    'Important': ['urgent', 'ASAP'],
+    'Work': ['report', 'meeting'],
+    'Spam': ['virus', 'hack', 'crack']
+}
+
+
+def filters_email(directory):
+    save_directory = '/home/vudeptrai/Documents/vu/Mail_from_Mail_Box'
+    if not os.path.exists(save_directory):
+        os.makedirs(save_directory)
+
+    for filename in os.listdir(directory):
+        if filename.endswith('.txt'):
+            file_path = os.path.join(directory, filename)
+
+            # Đọc nội dung email từ file
+            with open(file_path, 'rb') as f:
+                email_content = f.read().decode(errors='ignore')
+
+           
+            matched_rule = 'Inbox'  
+            for folder, keywords in filter_rules.items():
+                for keyword in keywords:
+                    if keyword.lower() in email_content.lower():
+                        matched_rule = folder
+                        break
+                if matched_rule != 'Inbox':
+                    break
+
+            new_folder = os.path.join(save_directory, matched_rule)
+            if not os.path.exists(new_folder):
+                os.makedirs(new_folder)
+
+            new_file_path = os.path.join(new_folder, filename)
+            shutil.move(file_path, new_file_path)
+            print(f'Moved email {filename} to {new_file_path}')
+
+# Thực hiện phân loại email trong thư mục đã lưu trữ
+filters_email('/home/vudeptrai/Documents/vu/Mail_from_Mail_Box')
+
 
 
 
@@ -219,24 +260,26 @@ def read_config_json(filename):
     with open(filename, "r") as f:
         config = json.load(f)
     return config
-
-
-
-
-
-
-
-
     
-
 def main():
     config = read_config_json('/home/vudeptrai/Documents/vu/config/config.json')
     sender_email = (config["General"]["Username"])
+    password = (config["General"]["Password"])
     smtp_server = (config["General"]["MailServer"])
     smtp_port = (config["General"]["SMTP"])
-    pop3_port = (config["General"]["POP3"])
+    email_server = (config["General"]["MailServer"])
+    email_port = (config["General"]["POP3"])
     autoload = (config["General"]["Autoload"])
     
+
+    filter_rules = {
+    'Inbox': ['Others'],  # Thư mục mặc định cho các email không phù hợp với bất kỳ quy tắc nào
+    'Project': ['ahihi@testing.com', 'ahuu@testing.com'],
+    'Important': ['urgent', 'ASAP'],
+    'Work': ['report', 'meeting'],
+    'Spam': ['virus', 'hack', 'crack']
+}
+
 
     while True:
         print("Chọn chức năng:")
@@ -248,7 +291,7 @@ def main():
         if choice == "1":
             send_email(sender_email, smtp_server, smtp_port)
         elif choice == "2":
-            fetch_emails()
+            fetch_emails(email_server,email_port, sender_email, password)
         elif choice == "3":
             print("Đã thoát chương trình.")
             break

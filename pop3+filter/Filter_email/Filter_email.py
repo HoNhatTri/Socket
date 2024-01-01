@@ -1,79 +1,39 @@
-import win32com.client as win32 
 import os
+import shutil
 
-outlook = win32.Dispatch("Outlook.Application").GetNamespace("MAPI")
-account = outlook.CurrentUser.AddressEntry.GetExchangeUser().PrimarySmtpAddress
-inbox= outlook.Folders[account].Folders("Hộp thư đến")
+def filters_email(directory):
+    # Đường dẫn thư mục lưu trữ các email được phân loại
+    save_directory = '/home/vudeptrai/Documents/vu/Mail_from_Mail_Box'
+    if not os.path.exists(save_directory):
+        os.makedirs(save_directory)
 
-#Choosed_Subject = ""
-#Choosed_Sender_Name = ""
-#Choosed_Content = ""
-#Choosed_EmailAddress = ""
-#filter_querry_emailaddress = f"@SQL=\"http://schemas.microsoft.com/mapi/proptag/0x0C1F001F\" like '%{Choosed_EmailAddress}%'"
-#filter_querry_sendername=f"@SQL=\"urn:schemas:httpmail:sender\" like '%{Choosed_Sender_Name}%'"
-#filter_querry_subject=f"@SQL=\"urn:schemas:httpmail:subject\" like '%{Choosed_Subject}%'"
-#filter_querry_content = f"@SQL=\"urn:schemas:httpmail:textdescription\" like '%{Choosed_Content}%'"
+    for filename in os.listdir(directory):
+        if filename.endswith('.msg'):
+            file_path = os.path.join(directory, filename)
 
-request_filter = "ahihi@testing.com"
-project_folder = outlook.Folders[account].Folders("Project")
-filtered_emails = inbox.Items.Restrict(f"[SenderEmailAddress] = '{request_filter}'")
-for email in filtered_emails:
-      email.Move(project_folder)
-request_filter = "ahuu@testing.com"
-project_folder = outlook.Folders[account].Folders("Project")
-filtered_emails = inbox.Items.Restrict(f"[SenderEmailAddress] = '{request_filter}'")
-for email in filtered_emails:
-      email.Move(project_folder)
+            # Đọc nội dung email từ file
+            with open(file_path, 'rb') as f:
+                email_content = f.read().decode(errors='ignore')
 
+            # Áp dụng quy tắc lọc và di chuyển email vào thư mục tương ứng
+            if 'ahihi@testing.com' in email_content or 'ahuu@testing.com' in email_content:
+                new_folder = os.path.join(save_directory, 'Project')
+            elif 'urgent' in email_content.upper() or 'ASAP' in email_content.upper():
+                new_folder = os.path.join(save_directory, 'Important')
+            elif 'report' in email_content.lower() or 'meeting' in email_content.lower():
+                new_folder = os.path.join(save_directory, 'Work')
+            elif 'virus' in email_content.lower() or 'hack' in email_content.lower() or 'crack' in email_content.lower():
+                new_folder = os.path.join(save_directory, 'Spam')
+            else:
+                new_folder = os.path.join(save_directory, 'Others')
 
-request_filter = "urgent"
-important_folder = outlook.Folders[account].Folders("Important")
-filtered_emails = inbox.Items.Restrict(f"@SQL=\"urn:schemas:httpmail:subject\" like '%{request_filter}%'")
-for email in filtered_emails:
-      email.Move(important_folder)
-request_filter = "ASAP"
-important_folder = outlook.Folders[account].Folders("Important")
-filtered_emails = inbox.Items.Restrict(f"@SQL=\"urn:schemas:httpmail:subject\" like '%{request_filter}%'")
-for email in filtered_emails:
-      email.Move(important_folder)
+            # Kiểm tra và di chuyển email vào thư mục mới
+            if not os.path.exists(new_folder):
+                os.makedirs(new_folder)
 
-request_filter = "report"
-work_folder = outlook.Folders[account].Folders("Work")
-filtered_emails = inbox.Items.Restrict(f"@SQL=\"urn:schemas:httpmail:textdescription\" like '%{request_filter}%'")
-for email in filtered_emails:
-    email.Move(work_folder)
-request_filter = "meeting"
-work_folder = outlook.Folders[account].Folders("Work")
-filtered_emails = inbox.Items.Restrict(f"@SQL=\"urn:schemas:httpmail:textdescription\" like '%{request_filter}%'")
-for email in filtered_emails:
-    email.Move(work_folder)
+            new_file_path = os.path.join(new_folder, filename)
+            shutil.move(file_path, new_file_path)
+            print(f'Moved email {filename} to {new_file_path}')
 
-request_filter = "virus"
-spam_folder = outlook.Folders[account].Folders("Spam")
-filtered_emails = inbox.Items.Restrict(f"@SQL=\"urn:schemas:httpmail:subject\" like '%{request_filter}%'" or f"@SQL=\"urn:schemas:httpmail:textdescription\" like '%{request_filter}%'")
-for email in filtered_emails:
-      email.Move(spam_folder)
-request_filter = "hack"
-spam_folder = outlook.Folders[account].Folders("Spam")
-filtered_emails = inbox.Items.Restrict(f"@SQL=\"urn:schemas:httpmail:subject\" like '%{request_filter}%'" or f"@SQL=\"urn:schemas:httpmail:textdescription\" like '%{request_filter}%'")
-for email in filtered_emails:
-      email.Move(spam_folder)
-request_filter = "crack"
-spam_folder = outlook.Folders[account].Folders("Spam")
-filtered_emails = inbox.Items.Restrict(f"@SQL=\"urn:schemas:httpmail:subject\" like '%{request_filter}%'" or f"@SQL=\"urn:schemas:httpmail:textdescription\" like '%{request_filter}%'")
-for email in filtered_emails:
-      email.Move(spam_folder)
-
-
-#Choosed_Subject = "Phòng đào tạo"
-#Choosed_Sender_Name = "Quý"
-#Choosed_Content = "Chào em"
-#Choosed_EmailAddress = "khaothi2@hcmus.edu.vn"
-#filter_querry_emailaddress = f"@SQL=\"http://schemas.microsoft.com/mapi/proptag/0x0C1F001F\" like '%{Choosed_EmailAddress}%'"
-#filter_querry_sendername=f"@SQL=\"urn:schemas:httpmail:sender\" like '%{Choosed_Sender_Name}%'"
-#filter_querry_subject=f"@SQL=\"urn:schemas:httpmail:subject\" like '%{Choosed_Subject}%'"
-#filter_querry_content = f"@SQL=\"urn:schemas:httpmail:textdescription\" like '%{Choosed_Content}%'"
-#messages = inbox.Items.Restrict(filter_querry_emailaddress)
-#messages.Sort("[ReceivedTime]",True)
-#for msg in messages:
-      #print(msg.SenderName + " " + str(msg.ReceivedTime))
+# Thực hiện phân loại email trong thư mục đã lưu trữ
+filters_email('/home/vudeptrai/Documents/vu/Mail_from_Mail_Box')
