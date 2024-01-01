@@ -1,50 +1,45 @@
-import socket
-import re
-import base64
 import os
-def decode_attachments(host, port, username, password):
-    # Tạo kết nối đến server
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((host, port))
-    response = sock.recv(1024).decode()
-    #print(response)
-    
-    sock.sendall(f'USER {username}\r\n'.encode())
-    response = sock.recv(1024).decode()
-    # print(response)
 
-    sock.sendall(f'PASS {password}\r\n'.encode())
-    response = sock.recv(1024).decode()
-    # print(response)
+def filters_email(directory):
+    # Xác định các quy tắc lọc và thư mục tương ứng
+    filter_rules = {
+        'Inbox': [''],
+        'Project': ['ahihi@testing.com', 'ahuu@testing.com'],
+        'Important': ['urgent', 'ASAP'],
+        'Work': ['report', 'meeting'],
+        'Spam': ['virus', 'hack', 'crack']
+    }
 
-    # Lấy danh sách email
-    sock.send(b"LIST\r\n")
-    data = sock.recv(1024)
-    while data:
-        tokens = data.decode("utf-8").split()
-        if tokens[0] == "EXISTS":
-            msgid = int(tokens[1])
+    # Tạo các thư mục lưu trữ kết quả lọc nếu chưa tồn tại
+    for folder in filter_rules.keys():
+        folder_path = os.path.join(directory, folder)
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
 
-    # Lấy nội dung email
-    sock.send(b"RETR {}\r\n".format(msgid))
-    data = sock.recv(1024)
-    while data:
-        email_content += data
-        data = sock.recv(1024)
+    # Lặp qua từng tệp tin email trong thư mục
+    for filename in os.listdir(directory):
+        if filename.endswith('.txt'):
+            file_path = os.path.join(directory, filename)
 
-    # Tìm phần đính kèm
-    match = re.search(r'Content-Transfer-Encoding: base64\r\nContent-Disposition: *attachment; *filename=(.*)\r\n\r\n([\s\S]*)', email_content)
-    if match:
-        file_name = match.group(1)
-        file_content = match.group(2)
+            # Đọc nội dung của tệp tin email
+            with open(file_path, 'rb') as f:
+                email_content = f.read().decode('utf-8', errors='ignore')
 
-        # Giải mã nội dung attachment
-        decoded_content = base64.b64decode(file_content)
-        save_directory = '/home/vudeptrai/Documents/vu/Mail_from_Mail_Box'
-        # Lưu lại file đã giải mã
-        file_path = os.path.join(save_directory, file_name)
-        with open(file_path, "wb") as f:
-            f.write(decoded_content)
+            # Áp dụng các quy tắc lọc
+            for folder, keywords in filter_rules.items():
+                for keyword in keywords:
+                    # Kiểm tra từ khóa trong nội dung email
+                    if keyword in email_content:
+                        # Di chuyển tệp tin email vào thư mục tương ứng
+                        new_file_path = os.path.join(directory, folder, filename)
+                        os.rename(file_path, new_file_path)
+                        print(f'Moved {filename} to {folder} folder')
+                        break  # Chỉ di chuyển vào một thư mục duy nhất
+    for filename in os.listdir(directory):
+        if filename.endswith('.msg'):
+            file_path = os.path.join(directory, filename)
 
-# Ví dụ sử dụng
-decode_attachments("127.0.0.1", 3335, "vuco@gmail.com", "123")
+            if not os.path.exists(file_path):
+                print(f"File {file_path} does not exist. Skipping...")
+                continue                   
+filters_email('/home/vudeptrai/Documents/vu/Mail_from_Mail_Box')

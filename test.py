@@ -84,6 +84,21 @@ def decode_base64_file(input_file, output_file):
     with open(output_file, 'wb') as file:
         file.write(decoded_data)
 
+def display_attachment_content(attachment_file):
+    with open(attachment_file, 'r') as file:
+        lines = file.readlines()
+
+    attachment_content = ""
+    for line in lines:
+        attachment_content += line
+    
+    base64.b64decode(attachment_content)
+
+    print("\nAttachment Content:")
+    print(attachment_content)
+    
+    
+    
 def display_email_content(eml_file):
     with open(eml_file, 'r') as file:
         lines = file.readlines()
@@ -129,6 +144,8 @@ def display_email_content(eml_file):
 
         print(f"\nAttachment saved as: {attachment_file}")
 
+        display_attachment_content(attachment_file)
+
 def decode_email_attachments(directory):
     if not os.path.exists(directory):
         print(f"Thư mục '{directory}' không tồn tại.")
@@ -138,5 +155,6 @@ def decode_email_attachments(directory):
         file_path = os.path.join(directory, file_name)
         if os.path.isfile(file_path) and file_name.endswith('.txt'):
             display_email_content(file_path)
+
 
 decode_email_attachments('/home/vudeptrai/Documents/vu/Mail_from_Mail_Box')

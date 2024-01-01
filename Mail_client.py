@@ -202,7 +202,7 @@ def fetch_emails():
             if response.endswith(b'\r\n.\r\n'):
                 break
         # Lưu trữ email vào thư mục đã chỉ định
-        file_path = os.path.join(save_directory, f'email_{email_id}.msg')
+        file_path = os.path.join(save_directory, f'email_{email_id}.txt')
         with open(file_path, 'wb') as f:
             f.write(email_content)
         print(f'Saved email {email_id} to {file_path}')
