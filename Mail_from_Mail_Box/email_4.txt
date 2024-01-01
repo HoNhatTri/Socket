@@ -1,0 +1,19 @@
++OK 401
+Content-Type: multipart/mixed; boundary="===============6511268601417252790=="
+MIME-Version: 1.0
+Date: Mon, 01 Jan 2024 15:39:32 +0700
+From: vuco@gmail.com
+To: vuco@gmail.com
+Cc: 
+Bcc: 
+Subject: virut
+
+--===============6511268601417252790==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+
+null
+--===============6511268601417252790==--
+
+.
