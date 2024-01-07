@@ -1,12 +1,11 @@
 {
-    "General": {
-      "Username": "22120437@mmt.edu.vn",
-      "Password": "123456",
-      "MailServer": "127.0.0.1",
-      "SMTP": 2225,
-      "POP3": 3335,
+  "General": {
+    "Username": "vuco@gmail.com",
+    "Password": "123",
+    "MailServer": "127.0.0.1",
+    "SMTP": 2225,
+    "POP3": 3335,
 
-      "Autoload": 10
-    }
+    "Autoload": 10
   }
-  
+}

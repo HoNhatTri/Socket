@@ -182,7 +182,7 @@ def fetch_emails(email_server,email_port, username, password):
     email_ids = response.split()[1:]
     filtered_ids = [email_ids[i] for i in range((len(email_ids))) if i % 2 == 0]
     
-    save_directory = 'C:/Work'  # Thay đổi đường dẫn này thành đường dẫn thư mục bạn muốn lưu email
+    save_directory = '/home/vudeptrai/Documents/vu/Mail_from_Mail_Box'  # Thay đổi đường dẫn này thành đường dẫn thư mục bạn muốn lưu email
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
 
@@ -221,7 +221,7 @@ filter_rules = {
 
 
 def filters_email(directory):
-    save_directory = 'C:/Work'
+    save_directory = '/home/vudeptrai/Documents/vu/Mail_from_Mail_Box'
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
 
@@ -251,8 +251,6 @@ def filters_email(directory):
             shutil.move(file_path, new_file_path)
             #print(f'Moved email {filename} to {new_file_path}')
 
-# Thực hiện phân loại email trong thư mục đã lưu trữ
-#filters_email('C:/Work')
 
 def select_email(directory, email_seen_status):
     print("Đây là danh sách các folder trong mailbox của bạn:")
@@ -334,7 +332,7 @@ def auto_download(email_server,email_port, username, password, time_config):
     sock.sendall(f'PASS {password}\r\n'.encode())
     response = sock.recv(1024).decode()
 
-    save_directory = 'C:/Work'
+    save_directory = '/home/vudeptrai/Documents/vu/Mail_from_Mail_Box'
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
 
@@ -355,7 +353,7 @@ def auto_download(email_server,email_port, username, password, time_config):
     email_ids = response.split()[1:]
     filtered_ids = [email_ids[i] for i in range((len(email_ids))) if i % 2 == 0]
         
-    save_directory = 'C:/Work'
+    save_directory = '/home/vudeptrai/Documents/vu/Mail_from_Mail_Box'
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
 
@@ -409,7 +407,7 @@ def main():
 }
     email_seen_status = []
     fetch_emails(email_server,email_port, sender_email, password)
-    filters_email('C:/Work')
+    filters_email('/home/vudeptrai/Documents/vu/Mail_from_Mail_Box')
 
     while True:
         print("Chọn chức năng:")
@@ -421,7 +419,7 @@ def main():
         if choice == "1":
             send_email(sender_email, smtp_server, smtp_port)
         elif choice == "2":
-            select_email('C:/Work',email_seen_status)
+            select_email('/home/vudeptrai/Documents/vu/Mail_from_Mail_Box',email_seen_status)
         elif choice == "3":
             print("Đã thoát chương trình.")
             break
