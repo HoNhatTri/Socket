@@ -202,8 +202,15 @@ def fetch_emails(email_server,email_port, username, password):
                 break
         # Lưu trữ email vào thư mục đã chỉ định
         file_path = os.path.join(save_directory, f'email_{email_id}.txt') 
-        with open(file_path, 'wb') as f:
-            f.write(email_content)
+        with open (downloaded_email_path, 'r') as esfp:
+            esfp_content = esfp.read()
+        # Nếu tên email không xuất hiện trong downloaded_emails.txt thì thực hiện tải email 
+        if f'email_{email_id}.txt' not in esfp_content :
+            with open(file_path, 'wb') as f:
+                f.write(email_content)
+            with open(downloaded_email_path, 'a+') as esfp:
+                # Thêm tên email vừa được tải vào downloaded_emails.txt
+                esfp.write(f'email_{email_id}.txt\n')
         
     # Đóng kết nối
     sock.sendall('QUIT\r\n'.encode())
@@ -435,7 +442,7 @@ def retrieve_email_file(email_content):
 
         
 
-def select_email(directory, email_seen_status):
+def select_email(directory):
     # Hàm thực hiện chọn thư mục và email 
 
     print("Đây là danh sách các folder trong mailbox của bạn:")
@@ -464,7 +471,10 @@ def select_email(directory, email_seen_status):
                 subject = ""
                 sender = retrieve_email_sender(sender,e_content)
                 subject = retrieve_email_subject(subject,e_content)
-                if file in email_seen_status:
+                with open (seen_email_path, 'r') as sep:
+                    sep_content = sep.read()
+                # Nếu tên file xuất hiện trong seen_emails.txt thì đã đọc, nếu chưa là chưa đọc
+                if file in sep_content :
                     print(i,'.',sender,',',subject)
                 else:
                     print(i,'.',"<chưa đọc>",sender,',',subject)
@@ -477,7 +487,9 @@ def select_email(directory, email_seen_status):
                     selected_email_index = int(ans) -1
                     if selected_email_index<len(all_sonfolder_email):
                         selected_email = all_sonfolder_email[selected_email_index]
-                        email_seen_status.append(selected_email)
+                        with open (seen_email_path, 'a+') as sep:
+                            # Thêm tên email đã đọc vào seen_emails.txt
+                            sep.write(selected_email + '\n')
                         selected_email_path = os.path.join(select_folder_path,selected_email)
                         print("Nội dung email của email thứ",selected_email_index + 1,":")
                         with open(selected_email_path,'r') as e:
@@ -511,8 +523,6 @@ def main():
     email_port = (config["General"]["POP3"])
     autoload = (config["General"]["Autoload"])
     
-    
-    email_seen_status = [] # Danh sách quản lý những email đã đọc
     fetch_emails(email_server,email_port, sender_email, password)
     filters_email('/home/vudeptrai/Documents/vu/Mail_from_Mail_Box')
 
@@ -532,7 +542,7 @@ def main():
         if choice == "1":
             send_email(sender_email, smtp_server, smtp_port)
         elif choice == "2":
-            select_email('/home/vudeptrai/Documents/vu/Mail_from_Mail_Box',email_seen_status)
+            select_email('/home/vudeptrai/Documents/vu/Mail_from_Mail_Box')
         elif choice == "3":
             stop_thread.set()
             autodown_email.join()
@@ -543,5 +553,21 @@ def main():
         else:
             print("Lựa chọn không hợp lệ. Vui lòng chọn lại.")
     
+
+# Tạo ra biến gloabal để lưu các email đã tải vào download_emails.txt
+Email_direction ="/Emails"
+if not os.path.exists(Email_direction):
+    os.makedirs(Email_direction)
+downloaded_email_path = os.path.join(Email_direction,"downloaded_emails.txt")
+with open(downloaded_email_path,'a+') as e:
+    e.write("")
+
+# Tạo ra biến global để lưu các email đã đọc vào seen_emails.txt
+Email_direction ="/Emails"
+if not os.path.exists(Email_direction):
+    os.makedirs(Email_direction)
+seen_email_path = os.path.join(Email_direction,"seen_emails.txt")
+with open(seen_email_path,'a+') as e:
+    e.write("")
 
 main()

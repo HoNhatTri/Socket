@@ -200,9 +200,14 @@ def fetch_emails(email_server,email_port, username, password):
             if response.endswith(b'\r\n.\r\n'):
                 break
         # Lưu trữ email vào thư mục đã chỉ định
-        file_path = os.path.join(save_directory, f'email_{email_id}.txt') 
-        with open(file_path, 'wb') as f:
-            f.write(email_content)
+        file_path = os.path.join(save_directory, f'email_{email_id}.txt')
+        with open (downloaded_email_path, 'r') as esfp:
+            esfp_content = esfp.read()
+        if f'email_{email_id}.txt' not in esfp_content :
+            with open(file_path, 'wb') as f:
+                f.write(email_content)
+            with open(downloaded_email_path, 'a+') as esfp:
+                esfp.write(f'email_{email_id}.txt\n')
         
     # Đóng kết nối
     sock.sendall('QUIT\r\n'.encode())
@@ -401,7 +406,7 @@ def retrieve_email_file(email_content):
 
         
 
-def select_email(directory, email_seen_status):
+def select_email(directory):
     print("Đây là danh sách các folder trong mailbox của bạn:")
     all_folder = next(os.walk(directory))[1]
     i=1
@@ -428,7 +433,9 @@ def select_email(directory, email_seen_status):
                 subject = ""
                 sender = retrieve_email_sender(sender,e_content)
                 subject = retrieve_email_subject(subject,e_content)
-                if file in email_seen_status:
+                with open (seen_email_path, 'r') as sep:
+                    sep_content = sep.read()
+                if file in sep_content :
                     print(i,'.',sender,',',subject)
                 else:
                     print(i,'.',"<chưa đọc>",sender,',',subject)
@@ -441,8 +448,9 @@ def select_email(directory, email_seen_status):
                     selected_email_index = int(ans) -1
                     if selected_email_index<len(all_sonfolder_email):
                         selected_email = all_sonfolder_email[selected_email_index]
-                        email_seen_status.append(selected_email)
                         selected_email_path = os.path.join(select_folder_path,selected_email)
+                        with open (seen_email_path, 'a+') as sep:
+                            sep.write(selected_email + '\n')
                         print("Nội dung email của email thứ",selected_email_index + 1,":")
                         with open(selected_email_path,'r') as e:
                             email_content = e.read()
@@ -452,9 +460,9 @@ def select_email(directory, email_seen_status):
                         retrieve_email_file(email_content)
 
 
-def auto_download(email_server,email_port, username, password,autoload,directory,stop_thread):
+def auto_download(email_server,email_port, username, password,autoload,directory,stop_thread,):
     while not stop_thread.is_set():
-        fetch_emails(email_server,email_port, username, password)
+        fetch_emails(email_server,email_port, username, password,)
         filters_email(directory)
         time.sleep(autoload)
 
@@ -473,9 +481,6 @@ def main():
     email_port = (config["General"]["POP3"])
     autoload = (config["General"]["Autoload"])
     
-
-
-    email_seen_status = []
     fetch_emails(email_server,email_port, sender_email, password)
     filters_email('C:/Work')
 
@@ -494,7 +499,7 @@ def main():
         if choice == "1":
             send_email(sender_email, smtp_server, smtp_port)
         elif choice == "2":
-            select_email('C:/Work',email_seen_status)
+            select_email('C:/Work')
         elif choice == "3":
             stop_thread.set()
             autodown_email.join()
@@ -503,5 +508,19 @@ def main():
         else:
             print("Lựa chọn không hợp lệ. Vui lòng chọn lại.")
     
+# Tạo ra biến gloabal
+Email_direction ="C:/Emails"
+if not os.path.exists(Email_direction):
+    os.makedirs(Email_direction)
+downloaded_email_path = os.path.join(Email_direction,"download_emails.txt")
+with open(downloaded_email_path,'a+') as e:
+    e.write("")
+
+Email_direction ="C:/Emails"
+if not os.path.exists(Email_direction):
+    os.makedirs(Email_direction)
+seen_email_path = os.path.join(Email_direction,"seen_emails.txt")
+with open(seen_email_path,'a+') as e:
+    e.write("")
 
 main()
