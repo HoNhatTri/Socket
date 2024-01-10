@@ -147,7 +147,6 @@ def send_email(sender_email, smtp_server, smtp_port):
     print("Connection to SMTP server closed")
 
 def fetch_emails(email_server,email_port, username, password):
-    # Sử dụng cổng 110 cho giao thức POP3 không qua SSL/TLS
 
     # Kết nối đến server email
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -177,8 +176,8 @@ def fetch_emails(email_server,email_port, username, password):
    # Sau khi lấy danh sách các email trong hộp thư đến
     email_ids = response.split()[1:]
     filtered_ids = [email_ids[i] for i in range((len(email_ids))) if i % 2 == 0]
-                    #/home/vudeptrai/Documents/vu/Mail_from_Mail_Box
-    save_directory = 'C:/Work'  # Thay đổi đường dẫn này thành đường dẫn thư mục bạn muốn lưu email
+                   
+    save_directory = '/home/vudeptrai/Documents/vu/Mail_from_Mail_Box'  # Thay đổi đường dẫn này thành đường dẫn thư mục bạn muốn lưu email
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
 
@@ -215,10 +214,11 @@ filter_rules = {
 
 
 def filters_email(directory):
-    save_directory = 'C:/Work'  #/home/vudeptrai/Documents/vu/Mail_from_Mail_Box
+    save_directory = '/home/vudeptrai/Documents/vu/Mail_from_Mail_Box'  
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
 
+    # Duyệt qua tất cả các email đã tải trong đường dẫn thư mục save_directory
     for filename in os.listdir(directory):
         if filename.endswith('.txt'):
             file_path = os.path.join(directory, filename)
@@ -227,7 +227,7 @@ def filters_email(directory):
             with open(file_path, 'rb') as f:
                 email_content = f.read().decode(errors='ignore')
 
-           
+            # Biến lưu trữ tên thư mục, mặc định là Inbox
             matched_rule = 'Inbox'  
             for folder, keywords in filter_rules.items():
                 for keyword in keywords:
@@ -245,15 +245,21 @@ def filters_email(directory):
             shutil.move(file_path, new_file_path)
 
 def retrieve_email_sender(sender,e_content):
-    #Lấy tên người gởi từ email
-    index = e_content.find("------------")
+    # Lấy sendername từ email
+
+    # Kiểm tra xe email có đính kèm file hay không
+    index = e_content.find("------------") 
     if index == -1 : 
+        
+        # Nếu không đính kèm file
         lines = e_content.split("\n")
         sender_line = lines[7]
         start_index = sender_line.index("<")
         end_index = sender_line.index(">")
         sender = sender_line[start_index + 1:end_index]
     else :
+
+        # Nếu có đính kèm file
         end_index = e_content.find("--------------")
         Content = e_content[:end_index]
         lines = Content.split("\n")
@@ -261,31 +267,47 @@ def retrieve_email_sender(sender,e_content):
         start_index = sender_line.index("<")
         end_index = sender_line.index(">")
         sender = sender_line[start_index + 1:end_index] 
+
+    # Trả về sendername
     return sender
 
 def retrieve_email_subject(subject,e_content):
-    #Lấy tên subject từ email
+    #Lấy subject từ email
+
+    # Kiểm tra xe email có đính kèm file hay không
     index = e_content.find("------------")
     if index == -1 : 
+
+        # Nếu không đính kèm file
         lines = e_content.split("\n")
         subject_line = lines[8]
         subject = subject_line.split(":")[1].strip()
     else :
+
+        # Nếu có đính kèm file
         end_index = e_content.find("--------------")
         Content = e_content[:end_index]
         lines = Content.split("\n")
         subject_line = lines[9]
         subject = subject_line.split(":")[1].strip()
+
+    # Trả về subject
     return subject
 
 def retrieve_email_body(body,email_content) :
     #Lấy nội dung từ email
+
+    # Kiểm tra xe email có đính kèm file hay không
     index = email_content.find("------------")
     if index == -1:
+
+        # Nếu không đính kèm file
         start_index = email_content.find("\n\n") + 2
         end_index = email_content.find("\n\n", start_index)
         body = email_content[start_index:end_index]
     else:
+
+        # Nếu có đính kèm file
         end_index = email_content.find("--------------")
         Content = email_content[:end_index]
         email_content = email_content.replace(Content,"")
@@ -295,46 +317,45 @@ def retrieve_email_body(body,email_content) :
         lines = Body.split('\n')
         body_content = '\n'.join(lines[4:])
         body=body_content.rstrip()
+
+    # Trả về nội dung thân thư 
     return body
 
-def save_attachedFile(file_name,file_content,direction):
-    if file_name.endswith("pdf"):
-        encoded_data=str(file_content)
-        decoded_data = base64.b64decode(encoded_data)
-        file_content = decoded_data.decode('utf-16')
-        pdf = fpdf()
-        pdf.add_page()
-        pdf.cell(0, 10, txt=file_content, ln=True)
-        pdf.output(file_name)
-        shutil.move(file_name, direction)
-
-
-
 def retrieve_email_file(email_content):
+    #Hàm kiểm tra xem email có đính kèm file không
+     
     index = email_content.find("------------")
     if index == -1 :
+
+        # Nếu không đính kèm file
         print("Không có file đính kèm.")
     else:
+        # Nếu có đính kèm file
+
+        #Biến email_content lưu trữ toàn bộ nội dung email, ta sẽ lần lượt xóa các phần nội dung không cần thiết, chỉ để lại phần nội dung chứa tên và nội dung file
         #Xóa Header
         end_index = email_content.find("--------------")
         Content = email_content[:end_index]
         email_content = email_content.replace(Content,"")
+
         #Xóa Body
         start_index = email_content.find("--------------")
         end_index = email_content.find("--------------",start_index+1)
         Body = email_content[start_index:end_index]
         email_content = email_content.replace(Body, "")
+
         #File
-        f_name_array = []
+        f_name_array = [] # Danh sách lưu trữ tên file
         f_name_count = 0
-        f_content_array = []
+        f_content_array = [] # Danh sách lưu trữ nội dung file
         f_content_count = 0
         start_index = email_content.find("--------------")
         while True:
             end_index = email_content.find("--------------",start_index+1)
             if end_index == -1 : break
             file_part = email_content[start_index:end_index]
-            #FILE NAME
+
+            # file_name lưu vào file_name_array
             name_start_index = file_part.find('name="') + len('name="')
             name_end_index = file_part.find('"', name_start_index )
             file_name = file_part[name_start_index:name_end_index]
@@ -350,7 +371,8 @@ def retrieve_email_file(email_content):
                 file_name= file_name.replace("Q1|", "")
                 f_name_array.append(file_name)
                 f_name_count = f_name_count + 1
-            #FILE CONTENT
+            
+            # file_content lưu vào file_content_array
             sections = file_part.split('\n\n')
             file_content = sections[1]
             f_content_array.append(file_content)
@@ -358,17 +380,14 @@ def retrieve_email_file(email_content):
             email_content=email_content.replace(file_part, "")
         while f_name_count >0 :
             print("Tên file: ",f_name_array[f_name_count-1])
-            answ = input("Trong mail có attach file, bạn có muốn save không: ")
-            if answ =="có":
-                direction = input("Đường dẫn bạn muốn lưu: ")
-                save_attachedFile(f_name_array[f_name_count-1],f_content_array[f_content_count-1],direction)
-                #print(f_content_array[f_content_count-1])
             f_name_count = f_name_count- 1
             f_content_count = f_content_count - 1
 
         
 
 def select_email(directory, email_seen_status):
+    # Hàm thực hiện chọn thư mục và email 
+
     print("Đây là danh sách các folder trong mailbox của bạn:")
     all_folder = next(os.walk(directory))[1]
     i=1
@@ -420,18 +439,20 @@ def select_email(directory, email_seen_status):
 
 
 def auto_download(email_server,email_port, username, password,autoload,directory,stop_thread):
+    # Hàm thực hiện tải email tự động theo thời gian file config
     while not stop_thread.is_set():
         fetch_emails(email_server,email_port, username, password)
         filters_email(directory)
         time.sleep(autoload)
 
 def read_config_json(filename):
+    # Hàm đọc file config
     with open(filename, "r") as f:
         config = json.load(f)
     return config
     
 def main():
-    config = read_config_json('C:/Users/ADMIN/Documents/Exercises/Python_store/@@@/config/config.json')
+    config = read_config_json('/home/vudeptrai/Documents/vu/config/config.json')
     sender_email = (config["General"]["Username"])
     password = (config["General"]["Password"])
     smtp_server = (config["General"]["MailServer"])
@@ -448,11 +469,13 @@ def main():
     'Work': ['report', 'meeting'],
     'Spam': ['virus', 'hack', 'crack']
 }
-    email_seen_status = []
+    
+    email_seen_status = [] # Danh sách quản lý những email đã đọc
     fetch_emails(email_server,email_port, sender_email, password)
-    filters_email('C:/Work')
+    filters_email('/home/vudeptrai/Documents/vu/Mail_from_Mail_Box')
 
-    directory = 'C:/Work'
+    # Thực hiện tự động tải email về theo thời gian file config
+    directory = '/home/vudeptrai/Documents/vu/Mail_from_Mail_Box'
     stop_thread = threading.Event()
     autodown_email = threading.Thread(target=auto_download,args=(email_server, email_port, sender_email, password, autoload, directory,stop_thread))
     autodown_email.start()
@@ -467,10 +490,12 @@ def main():
         if choice == "1":
             send_email(sender_email, smtp_server, smtp_port)
         elif choice == "2":
-            select_email('C:/Work',email_seen_status)
+            select_email('/home/vudeptrai/Documents/vu/Mail_from_Mail_Box',email_seen_status)
         elif choice == "3":
             stop_thread.set()
             autodown_email.join()
+            # Thực hiện dừng tự động tải email khi kết thúc chương trình. Hoạt động dừng lại này cần một ít thời gian
+            
             print("Đã thoát chương trình.")
             break
         else:
