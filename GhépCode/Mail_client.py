@@ -6,13 +6,16 @@ import socket
 import base64
 import shutil
 import email
-import fpdf
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 from email.utils import formatdate
+from reportlab.pdfgen import canvas
+from docx import Document
+from PIL import Image
+from openpyxl import Workbook
 
 def get_file_size(file_path):
     return os.path.getsize(file_path) / (1024 * 1024)
@@ -299,14 +302,44 @@ def retrieve_email_body(body,email_content) :
 
 def save_attachedFile(file_name,file_content,direction):
     if file_name.endswith("pdf"):
-        encoded_data=str(file_content)
+        encoded_data=file_content
         decoded_data = base64.b64decode(encoded_data)
-        file_content = decoded_data.decode('utf-16')
-        pdf = fpdf()
-        pdf.add_page()
-        pdf.cell(0, 10, txt=file_content, ln=True)
-        pdf.output(file_name)
-        shutil.move(file_name, direction)
+        pdf_path = os.path.join(direction, file_name)
+        pdf = canvas.Canvas(pdf_path)
+        with open(pdf_path,'wb') as pdf:
+            pdf.write(decoded_data)
+    elif file_name.endswith("txt"):
+        encoded_data=file_content
+        decoded_data = base64.b64decode(encoded_data)
+        txt_path=os.path.join(direction,file_name)
+        with open(txt_path,'wb') as txt:
+            txt.write(decoded_data)
+    elif file_name.endswith("docx"):
+        encoded_data=file_content
+        decoded_data = base64.b64decode(encoded_data)
+        doc = Document()
+        doc.save(file_name)
+        docx_path=os.path.join(direction,file_name)
+        with open(docx_path,'wb') as docx:
+            docx.write(decoded_data)
+    elif file_name.endswith("jpg") or file_name.endswith("png"):
+        encoded_data=file_content
+        decoded_data = base64.b64decode(encoded_data)
+        image=Image.new('RGB', (800, 600), color='white')
+        image.save(file_name)
+        img_path=os.path.join(direction,file_name)
+        with open(img_path,'wb') as img:
+            img.write(decoded_data)
+    elif file_name.endswith("xlsx"):
+        encoded_data=file_content
+        decoded_data = base64.b64decode(encoded_data)
+        workbook = Workbook()
+        workbook.save(file_name)
+        ex_path=os.path.join(direction,file_name)
+        with open(ex_path,'wb') as ex:
+            ex.write(decoded_data)
+        
+
 
 
 
@@ -441,13 +474,7 @@ def main():
     autoload = (config["General"]["Autoload"])
     
 
-    filter_rules = {
-    'Inbox': ['Others'],  # Thư mục mặc định cho các email không phù hợp với bất kỳ quy tắc nào
-    'Project': ['ahihi@testing.com', 'ahuu@testing.com'],
-    'Important': ['urgent', 'ASAP'],
-    'Work': ['report', 'meeting'],
-    'Spam': ['virus', 'hack', 'crack']
-}
+
     email_seen_status = []
     fetch_emails(email_server,email_port, sender_email, password)
     filters_email('C:/Work')

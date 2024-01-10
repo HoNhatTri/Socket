@@ -13,6 +13,11 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 from email.utils import formatdate
+from reportlab.pdfgen import canvas
+from docx import Document
+from PIL import Image
+from openpyxl import Workbook
+
 
 def get_file_size(file_path):
     return os.path.getsize(file_path) / (1024 * 1024)
@@ -321,6 +326,47 @@ def retrieve_email_body(body,email_content) :
     # Trả về nội dung thân thư 
     return body
 
+def save_attachedFile(file_name,file_content,direction):
+    # Hàm lưu attached file xuống máy client
+    
+    if file_name.endswith("pdf"):
+        encoded_data=file_content
+        decoded_data = base64.b64decode(encoded_data)
+        pdf_path = os.path.join(direction, file_name)
+        pdf = canvas.Canvas(pdf_path)
+        with open(pdf_path,'wb') as pdf:
+            pdf.write(decoded_data)
+    elif file_name.endswith("txt"):
+        encoded_data=file_content
+        decoded_data = base64.b64decode(encoded_data)
+        txt_path=os.path.join(direction,file_name)
+        with open(txt_path,'wb') as txt:
+            txt.write(decoded_data)
+    elif file_name.endswith("docx"):
+        encoded_data=file_content
+        decoded_data = base64.b64decode(encoded_data)
+        doc = Document()
+        doc.save(file_name)
+        docx_path=os.path.join(direction,file_name)
+        with open(docx_path,'wb') as docx:
+            docx.write(decoded_data)
+    elif file_name.endswith("jpg") or file_name.endswith("png"):
+        encoded_data=file_content
+        decoded_data = base64.b64decode(encoded_data)
+        image=Image.new('RGB', (800, 600), color='white')
+        image.save(file_name)
+        img_path=os.path.join(direction,file_name)
+        with open(img_path,'wb') as img:
+            img.write(decoded_data)
+    elif file_name.endswith("xlsx"):
+        encoded_data=file_content
+        decoded_data = base64.b64decode(encoded_data)
+        workbook = Workbook()
+        workbook.save(file_name)
+        ex_path=os.path.join(direction,file_name)
+        with open(ex_path,'wb') as ex:
+            ex.write(decoded_data)
+
 def retrieve_email_file(email_content):
     #Hàm kiểm tra xem email có đính kèm file không
      
@@ -380,6 +426,10 @@ def retrieve_email_file(email_content):
             email_content=email_content.replace(file_part, "")
         while f_name_count >0 :
             print("Tên file: ",f_name_array[f_name_count-1])
+            answ = input("Trong mail có attach file, bạn có muốn save không: ")
+            if answ =="có":
+                direction = input("Đường dẫn bạn muốn lưu: ")
+                save_attachedFile(f_name_array[f_name_count-1],f_content_array[f_content_count-1],direction)
             f_name_count = f_name_count- 1
             f_content_count = f_content_count - 1
 
@@ -461,14 +511,6 @@ def main():
     email_port = (config["General"]["POP3"])
     autoload = (config["General"]["Autoload"])
     
-
-    filter_rules = {
-    'Inbox': ['Others'],  # Thư mục mặc định cho các email không phù hợp với bất kỳ quy tắc nào
-    'Project': ['ahihi@testing.com', 'ahuu@testing.com'],
-    'Important': ['urgent', 'ASAP'],
-    'Work': ['report', 'meeting'],
-    'Spam': ['virus', 'hack', 'crack']
-}
     
     email_seen_status = [] # Danh sách quản lý những email đã đọc
     fetch_emails(email_server,email_port, sender_email, password)
