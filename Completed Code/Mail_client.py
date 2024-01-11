@@ -256,45 +256,39 @@ def filters_email(save_directory):
 
 def retrieve_email_sender(sender,e_content):
     # Lấy sendername từ email
-
-    # Kiểm tra xe email có đính kèm file hay không
-    index = e_content.find("------------") 
-    if index == -1 : 
-        
-        # Nếu không đính kèm file
+    index_1 = e_content.find('="===============')
+    if index_1 != -1 :
         lines = e_content.split("\n")
-        sender_line = lines[7]
-        start_index = sender_line.index("<")
-        end_index = sender_line.index(">")
-        sender = sender_line[start_index + 1:end_index]
+        sender_line = lines[4]
+        sender = sender_line.split(":")[1].strip()
     else :
-
-        # Nếu có đính kèm file
-        end_index = e_content.find("--------------")
-        Content = e_content[:end_index]
-        lines = Content.split("\n")
-        sender_line = lines[8]
-        start_index = sender_line.index("<")
-        end_index = sender_line.index(">")
-        sender = sender_line[start_index + 1:end_index] 
+        index_2 = e_content.find("------------") 
+        if index_2 == -1 : 
+            lines = e_content.split("\n")
+            sender_line = lines[7]
+            start_index = sender_line.index("<")
+            end_index = sender_line.index(">")
+            sender = sender_line[start_index + 1:end_index]
+        else :
+            end_index = e_content.find("--------------")
+            Content = e_content[:end_index]
+            lines = Content.split("\n")
+            sender_line = lines[8]
+            start_index = sender_line.index("<")
+            end_index = sender_line.index(">")
+            sender = sender_line[start_index + 1:end_index] 
 
     # Trả về sendername
     return sender
 
 def retrieve_email_subject(subject,e_content):
     #Lấy subject từ email
-
-    # Kiểm tra xe email có đính kèm file hay không
     index = e_content.find("------------")
     if index == -1 : 
-
-        # Nếu không đính kèm file
         lines = e_content.split("\n")
         subject_line = lines[8]
         subject = subject_line.split(":")[1].strip()
     else :
-
-        # Nếu có đính kèm file
         end_index = e_content.find("--------------")
         Content = e_content[:end_index]
         lines = Content.split("\n")
@@ -306,27 +300,30 @@ def retrieve_email_subject(subject,e_content):
 
 def retrieve_email_body(body,email_content) :
     #Lấy nội dung từ email
-
-    # Kiểm tra xe email có đính kèm file hay không
-    index = email_content.find("------------")
-    if index == -1:
-
-        # Nếu không đính kèm file
-        start_index = email_content.find("\n\n") + 2
-        end_index = email_content.find("\n\n", start_index)
-        body = email_content[start_index:end_index]
+    index_1 = email_content.find('--===============')
+    if index_1 != -1:
+        start_index = index_1
+        end_index = email_content.find('--===============',start_index+1)
+        body_content = email_content[start_index:end_index]
+        empty_line_index = body_content.find('\n\n')
+        body = body_content[empty_line_index+2:]
+        body = body.rstrip()
     else:
-
-        # Nếu có đính kèm file
-        end_index = email_content.find("--------------")
-        Content = email_content[:end_index]
-        email_content = email_content.replace(Content,"")
-        start_index = email_content.find("--------------")
-        end_index = email_content.find("--------------",start_index+1)
-        Body = email_content[start_index:end_index]
-        lines = Body.split('\n')
-        body_content = '\n'.join(lines[4:])
-        body=body_content.rstrip()
+        index_2 = email_content.find("------------")
+        if index_2 == -1:
+            start_index = email_content.find("\n\n") + 2
+            end_index = email_content.rfind("\n\n")
+            body = email_content[start_index:end_index]
+        else:
+            end_index = email_content.find("--------------")
+            Content = email_content[:end_index]
+            email_content = email_content.replace(Content,"")
+            start_index = email_content.find("--------------")
+            end_index = email_content.find("--------------",start_index+1)
+            Body = email_content[start_index:end_index]
+            lines = Body.split('\n')
+            body_content = '\n'.join(lines[4:])
+            body=body_content.rstrip()
 
     # Trả về nội dung thân thư 
     return body
@@ -374,52 +371,47 @@ def save_attachedFile(file_name,file_content,direction):
 
 def retrieve_email_file(email_content):
     #Hàm kiểm tra xem email có đính kèm file không
-     
-    index = email_content.find("------------")
-    if index == -1 :
-
-        # Nếu không đính kèm file
-        print("Không có file đính kèm.")
-    else:
-        # Nếu có đính kèm file
-
-        #Biến email_content lưu trữ toàn bộ nội dung email, ta sẽ lần lượt xóa các phần nội dung không cần thiết, chỉ để lại phần nội dung chứa tên và nội dung file
+    index_1 = email_content.find("--===============")
+    if index_1 != -1 :
         #Xóa Header
-        end_index = email_content.find("--------------")
+        end_index = email_content.find("--===============")
         Content = email_content[:end_index]
         email_content = email_content.replace(Content,"")
 
         #Xóa Body
-        start_index = email_content.find("--------------")
-        end_index = email_content.find("--------------",start_index+1)
+        start_index = email_content.find("--===============")
+        end_index = email_content.find("--===============",start_index+1)
         Body = email_content[start_index:end_index]
         email_content = email_content.replace(Body, "")
 
-        #File
+        #FILE
         f_name_array = [] # Danh sách lưu trữ tên file
         f_name_count = 0
         f_content_array = [] # Danh sách lưu trữ nội dung file
         f_content_count = 0
-        start_index = email_content.find("--------------")
+        start_index = email_content.find("--===============")
         while True:
-            end_index = email_content.find("--------------",start_index+1)
+            end_index = email_content.find("--===============",start_index+1)
             if end_index == -1 : break
             file_part = email_content[start_index:end_index]
 
             # file_name lưu vào file_name_array
-            name_start_index = file_part.find('name="') + len('name="')
-            name_end_index = file_part.find('"', name_start_index )
-            file_name = file_part[name_start_index:name_end_index]
-            datatybe_name = file_name.find("?UTF-8?B?")
-            if datatybe_name == -1:
+            lines = file_part.split('\n')
+            selected_line = lines[4]
+            selected_line_1 = selected_line.split(":")[1].strip()
+            if "?b?" in selected_line_1 :
+                encoded_data = selected_line_1.split("?b?")
+                encoded_data=str(encoded_data)
+                decoded_data = base64.b64decode(encoded_data)
+                string = decoded_data.decode(errors='ignore')
+                parts = string.split('/')
+                file_name = parts[-1].strip()
                 f_name_array.append(file_name)
                 f_name_count = f_name_count + 1
             else:
-                encoded_data = file_name.split("?B?")
-                encoded_data=str(encoded_data)
-                decoded_data = base64.b64decode(encoded_data)
-                file_name = decoded_data.decode('utf-8')
-                file_name= file_name.replace("Q1|", "")
+                string = selected_line.split('=')[1].strip()
+                parts = string.split('/')
+                file_name = parts[-1].strip()
                 f_name_array.append(file_name)
                 f_name_count = f_name_count + 1
             
@@ -429,6 +421,8 @@ def retrieve_email_file(email_content):
             f_content_array.append(file_content)
             f_content_count + 1
             email_content=email_content.replace(file_part, "")
+        if f_name_count == 0:
+            print("Không có file đính kèm.")
         while f_name_count >0 :
             print("Tên file: ",f_name_array[f_name_count-1])
             answ = input("Trong mail có attach file, bạn có muốn save không: ")
@@ -437,6 +431,66 @@ def retrieve_email_file(email_content):
                 save_attachedFile(f_name_array[f_name_count-1],f_content_array[f_content_count-1],direction)
             f_name_count = f_name_count- 1
             f_content_count = f_content_count - 1
+
+
+    else :
+        index_2 = email_content.find("------------")
+        if index_2 == -1 :
+            print("Không có file đính kèm.")
+        else:
+            #Xóa Header
+            end_index = email_content.find("--------------")
+            Content = email_content[:end_index]
+            email_content = email_content.replace(Content,"")
+
+            #Xóa Body
+            start_index = email_content.find("--------------")
+            end_index = email_content.find("--------------",start_index+1)
+            Body = email_content[start_index:end_index]
+            email_content = email_content.replace(Body, "")
+
+            #File
+            f_name_array = [] # Danh sách lưu trữ tên file
+            f_name_count = 0
+            f_content_array = [] # Danh sách lưu trữ nội dung file
+            f_content_count = 0
+            start_index = email_content.find("--------------")
+            while True:
+                end_index = email_content.find("--------------",start_index+1)
+                if end_index == -1 : break
+                file_part = email_content[start_index:end_index]
+
+                # file_name lưu vào file_name_array
+                name_start_index = file_part.find('name="') + len('name="')
+                name_end_index = file_part.find('"', name_start_index )
+                file_name = file_part[name_start_index:name_end_index]
+                datatybe_name = file_name.find("?UTF-8?B?")
+                if datatybe_name == -1:
+                    f_name_array.append(file_name)
+                    f_name_count = f_name_count + 1
+                else:
+                    encoded_data = file_name.split("?B?")
+                    encoded_data=str(encoded_data)
+                    decoded_data = base64.b64decode(encoded_data)
+                    file_name = decoded_data.decode('utf-8')
+                    file_name= file_name.replace("Q1|", "")
+                    f_name_array.append(file_name)
+                    f_name_count = f_name_count + 1
+                
+                # file_content lưu vào file_content_array
+                sections = file_part.split('\n\n')
+                file_content = sections[1]
+                f_content_array.append(file_content)
+                f_content_count + 1
+                email_content=email_content.replace(file_part, "")
+            while f_name_count >0 :
+                print("Tên file: ",f_name_array[f_name_count-1])
+                answ = input("Trong mail có attach file, bạn có muốn save không: ")
+                if answ =="có":
+                    direction = input("Đường dẫn bạn muốn lưu: ")
+                    save_attachedFile(f_name_array[f_name_count-1],f_content_array[f_content_count-1],direction)
+                f_name_count = f_name_count- 1
+                f_content_count = f_content_count - 1
 
         
 
@@ -485,9 +539,12 @@ def select_email(directory):
                     selected_email_index = int(ans) -1
                     if selected_email_index<len(all_sonfolder_email):
                         selected_email = all_sonfolder_email[selected_email_index]
-                        with open (seen_email_path, 'a+') as sep:
+                        with open (seen_email_path, 'r') as sep:
+                            sep_content = sep.read()
+                        if selected_email not in sep_content :
+                            with open (seen_email_path, 'a+') as sep:
                             # Thêm tên email đã đọc vào seen_emails.txt
-                            sep.write(selected_email + '\n')
+                                sep.write(selected_email + '\n')
                         selected_email_path = os.path.join(select_folder_path,selected_email)
                         print("Nội dung email của email thứ",selected_email_index + 1,":")
                         with open(selected_email_path,'r') as e:
