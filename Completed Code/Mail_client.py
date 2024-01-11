@@ -512,6 +512,7 @@ def read_config_json(filename):
     return config
     
 def main():
+    # Nhập địa chỉ của file config.json hiện tại
     config = read_config_json('/home/vudeptrai/Documents/vu/config/config.json')
     sender_email = (config["General"]["Username"])
     password = (config["General"]["Password"])
