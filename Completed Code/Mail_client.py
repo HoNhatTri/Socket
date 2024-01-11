@@ -524,10 +524,6 @@ def main():
     # Nhập địa chỉ thư mục muốn tải email về
     save_directory = '/home/vudeptrai/Documents/vu/Mail_from_Mail_Box'
     
-    # Thực hiện tải email về và lọc email
-    fetch_emails(email_server,email_port, sender_email, password, save_directory)
-    filters_email(save_directory)
-
     # Thực hiện tự động tải email về theo thời gian file config
     stop_thread = threading.Event()
     autodown_email = threading.Thread(target=auto_download,args=(email_server, email_port, sender_email, password, autoload, save_directory,stop_thread))
@@ -543,6 +539,10 @@ def main():
         if choice == "1":
             send_email(sender_email, smtp_server, smtp_port)
         elif choice == "2":
+            # Thực hiện tải email về và lọc email
+            fetch_emails(email_server,email_port, sender_email, password, save_directory)
+            filters_email(save_directory)
+
             select_email(save_directory)
         elif choice == "3":
             stop_thread.set()
