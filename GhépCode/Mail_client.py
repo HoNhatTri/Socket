@@ -149,7 +149,7 @@ def send_email(sender_email, smtp_server, smtp_port):
 
     print("Connection to SMTP server closed")
 
-def fetch_emails(email_server,email_port, username, password):
+def fetch_emails(email_server,email_port, username, password, save_directory):
     # Sử dụng cổng 110 cho giao thức POP3 không qua SSL/TLS
 
     # Kết nối đến server email
@@ -180,8 +180,7 @@ def fetch_emails(email_server,email_port, username, password):
    # Sau khi lấy danh sách các email trong hộp thư đến
     email_ids = response.split()[1:]
     filtered_ids = [email_ids[i] for i in range((len(email_ids))) if i % 2 == 0]
-                    #/home/vudeptrai/Documents/vu/Mail_from_Mail_Box
-    save_directory = 'C:/Work'  # Thay đổi đường dẫn này thành đường dẫn thư mục bạn muốn lưu email
+                    
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
 
@@ -222,14 +221,14 @@ filter_rules = {
 }
 
 
-def filters_email(directory):
-    save_directory = 'C:/Work'  #/home/vudeptrai/Documents/vu/Mail_from_Mail_Box
+def filters_email(save_directory):
+
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
 
-    for filename in os.listdir(directory):
+    for filename in os.listdir(save_directory):
         if filename.endswith('.txt'):
-            file_path = os.path.join(directory, filename)
+            file_path = os.path.join(save_directory, filename)
 
             # Đọc nội dung email từ file
             with open(file_path, 'rb') as f:
@@ -460,10 +459,10 @@ def select_email(directory):
                         retrieve_email_file(email_content)
 
 
-def auto_download(email_server,email_port, username, password,autoload,directory,stop_thread,):
+def auto_download(email_server,email_port, username, password,autoload,save_directory,stop_thread,):
     while not stop_thread.is_set():
-        fetch_emails(email_server,email_port, username, password,)
-        filters_email(directory)
+        fetch_emails(email_server,email_port, username, password,save_directory)
+        filters_email(save_directory)
         time.sleep(autoload)
 
 def read_config_json(filename):
@@ -480,13 +479,15 @@ def main():
     email_server = (config["General"]["MailServer"])
     email_port = (config["General"]["POP3"])
     autoload = (config["General"]["Autoload"])
-    
-    fetch_emails(email_server,email_port, sender_email, password)
-    filters_email('C:/Work')
 
-    directory = 'C:/Work'
+    save_directory = 'C:/Work' 
+    
+    fetch_emails(email_server,email_port, sender_email, password,save_directory)
+    filters_email(save_directory)
+
+    
     stop_thread = threading.Event()
-    autodown_email = threading.Thread(target=auto_download,args=(email_server, email_port, sender_email, password, autoload, directory,stop_thread))
+    autodown_email = threading.Thread(target=auto_download,args=(email_server, email_port, sender_email, password, autoload, save_directory,stop_thread))
     autodown_email.start()
 
     while True:
@@ -499,7 +500,7 @@ def main():
         if choice == "1":
             send_email(sender_email, smtp_server, smtp_port)
         elif choice == "2":
-            select_email('C:/Work')
+            select_email(save_directory)
         elif choice == "3":
             stop_thread.set()
             autodown_email.join()
@@ -509,14 +510,14 @@ def main():
             print("Lựa chọn không hợp lệ. Vui lòng chọn lại.")
     
 # Tạo ra biến gloabal
-Email_direction ="C:/Emails"
+Email_direction ="/Emails"
 if not os.path.exists(Email_direction):
     os.makedirs(Email_direction)
 downloaded_email_path = os.path.join(Email_direction,"download_emails.txt")
 with open(downloaded_email_path,'a+') as e:
     e.write("")
 
-Email_direction ="C:/Emails"
+Email_direction ="/Emails"
 if not os.path.exists(Email_direction):
     os.makedirs(Email_direction)
 seen_email_path = os.path.join(Email_direction,"seen_emails.txt")

@@ -151,7 +151,7 @@ def send_email(sender_email, smtp_server, smtp_port):
 
     print("Connection to SMTP server closed")
 
-def fetch_emails(email_server,email_port, username, password):
+def fetch_emails(email_server,email_port, username, password,save_directory):
 
     # Kết nối đến server email
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -182,7 +182,6 @@ def fetch_emails(email_server,email_port, username, password):
     email_ids = response.split()[1:]
     filtered_ids = [email_ids[i] for i in range((len(email_ids))) if i % 2 == 0]
                    
-    save_directory = '/home/vudeptrai/Documents/vu/Mail_from_Mail_Box'  # Thay đổi đường dẫn này thành đường dẫn thư mục bạn muốn lưu email
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
 
@@ -225,15 +224,14 @@ filter_rules = {
 }
 
 
-def filters_email(directory):
-    save_directory = '/home/vudeptrai/Documents/vu/Mail_from_Mail_Box'  
+def filters_email(save_directory):  
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
 
     # Duyệt qua tất cả các email đã tải trong đường dẫn thư mục save_directory
-    for filename in os.listdir(directory):
+    for filename in os.listdir(save_directory):
         if filename.endswith('.txt'):
-            file_path = os.path.join(directory, filename)
+            file_path = os.path.join(save_directory, filename)
 
             # Đọc nội dung email từ file
             with open(file_path, 'rb') as f:
@@ -500,11 +498,11 @@ def select_email(directory):
                         retrieve_email_file(email_content)
 
 
-def auto_download(email_server,email_port, username, password,autoload,directory,stop_thread):
+def auto_download(email_server,email_port, username, password,autoload,save_directory,stop_thread):
     # Hàm thực hiện tải email tự động theo thời gian file config
     while not stop_thread.is_set():
-        fetch_emails(email_server,email_port, username, password)
-        filters_email(directory)
+        fetch_emails(email_server,email_port, username, password,save_directory)
+        filters_email(save_directory)
         time.sleep(autoload)
 
 def read_config_json(filename):
@@ -522,14 +520,17 @@ def main():
     email_server = (config["General"]["MailServer"])
     email_port = (config["General"]["POP3"])
     autoload = (config["General"]["Autoload"])
+
+    # Nhập địa chỉ thư mục muốn tải email về
+    save_directory = '/home/vudeptrai/Documents/vu/Mail_from_Mail_Box'
     
-    fetch_emails(email_server,email_port, sender_email, password)
-    filters_email('/home/vudeptrai/Documents/vu/Mail_from_Mail_Box')
+    # Thực hiện tải email về và lọc email
+    fetch_emails(email_server,email_port, sender_email, password, save_directory)
+    filters_email(save_directory)
 
     # Thực hiện tự động tải email về theo thời gian file config
-    directory = '/home/vudeptrai/Documents/vu/Mail_from_Mail_Box'
     stop_thread = threading.Event()
-    autodown_email = threading.Thread(target=auto_download,args=(email_server, email_port, sender_email, password, autoload, directory,stop_thread))
+    autodown_email = threading.Thread(target=auto_download,args=(email_server, email_port, sender_email, password, autoload, save_directory,stop_thread))
     autodown_email.start()
 
     while True:
@@ -542,7 +543,7 @@ def main():
         if choice == "1":
             send_email(sender_email, smtp_server, smtp_port)
         elif choice == "2":
-            select_email('/home/vudeptrai/Documents/vu/Mail_from_Mail_Box')
+            select_email(save_directory)
         elif choice == "3":
             stop_thread.set()
             autodown_email.join()
